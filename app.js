@@ -4,9 +4,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const fs = require('fs');
-
+const cors = require('cors')
 const app = express();
 app.use(bodyParser.json());
+app.use(cors({
+     origin:"https://netflix-backend-o5r4.onrender.com"})
 mongoose.set('strictQuery', false);
 //connect to MongoDB
 
