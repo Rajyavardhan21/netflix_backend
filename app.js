@@ -1,29 +1,21 @@
+
+
 const express = require('express');
 const bodyParser = require('body-parser');
-
+const mongoose = require('mongoose');
 const fs = require('fs');
 
 const app = express();
 app.use(bodyParser.json());
-
+mongoose.set('strictQuery', false);
 //connect to MongoDB
-
-const mongoose = require('mongoose')
-
-const url = 'mongodb+srv://miniprojectfour:me2ciDtJCkbgVCMJ@cluster0.xxiuhto.mongodb.net/movies_db?retryWrites=true&w=majority';
-
-const connectionParams={
-    useNewUrlParser: true,
-   
-    useUnifiedTopology: true 
-}
-mongoose.connect(url,connectionParams)
-    .then( () => {
-        console.log('Connected to the database ')
+mongoose.connect('mongodb://127.0.0.1:27017/movies_db', { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(client => {
+        console.log("Connected to MongoDB");
     })
-    .catch( (err) => {
-        console.error(`Error connecting to the database. n${err}`);
-    })
+    .catch(err => {
+        console.log(err);
+    });
 
 //define movie schema
 const movieSchema = new mongoose.Schema({
@@ -74,27 +66,50 @@ app.get('/movies/:id', (req, res) => {
 
 //stream movie
 app.get('/movies/stream/:id', (req, res) => {
-    
+    const range = req.headers.range;
+    if (!range) {
+        res.status(400).send("Requires Range Header");
+    }
+    else {
     Movie.findOne({ id: req.params.id })
     .then(movie => {
     if (!movie) {
     res.status(404).json({ message: "Movie not found" });
     }
-    
     else {
-            res.status(200).json(movie.trailer);
-        
+    const videoPath = movie.trailer;
+    const videoSize = fs.statSync(videoPath).size;
+    const CHUNK_SIZE = 500 * 1024; // 500KB
+    const start = Number(range.replace(/\D/g, ""));
+    const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
+    const contentLength = end - start + 1;
+    const headers = {
+    "Content-Range": `bytes ${start}-${end}/${videoSize}`,
+    "Accept-Ranges": "bytes",
+    "Content-Length": contentLength,
+    "Content-Type": "video/mp4"
+    };
+    res.writeHead(206, headers);
+    const videoStream = fs.createReadStream(videoPath, { start, end });
+    videoStream.pipe(res);
     }
     })
     .catch(err => {
     res.status(500).json({ message: "Error streaming movie", error: err });
     });
-    
+    }
     });
     
     //start server
-    const hostname = "localhost";
+    const hostname = "netflix_backend.onrender.com";
     const port = 8008;
     app.listen(port, hostname, () => {
     console.log(`Server is running on http://${hostname}:${port}`);
     });
+    
+    
+    // const http = require('http');
+    // const port = 8008;
+    // app.listen(port, "locahost", () => {
+    // console.log(`Server is running on http://${hostname}:${port}`);
+    // });
