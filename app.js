@@ -9,13 +9,23 @@ const app = express();
 app.use(bodyParser.json());
 mongoose.set('strictQuery', false);
 //connect to MongoDB
-mongoose.connect('mongodb://127.0.0.1:27017/movies_db', { useNewUrlParser: true, useUnifiedTopology: true })
-    .then(client => {
-        console.log("Connected to MongoDB");
+
+
+
+
+
+mongoose.connect('mongodb+srv://miniprojectfour:me2ciDtJCkbgVCMJ@cluster0.xxiuhto.mongodb.net/movies_db?retryWrites=true&w=majority',{
+    useNewUrlParser: true,
+   
+    useUnifiedTopology: true 
+})
+    .then( () => {
+        console.log('Connected to the database ')
     })
-    .catch(err => {
-        console.log(err);
-    });
+    .catch( (err) => {
+        console.error(`Error connecting to the database. n${err}`);
+    })
+
 
 //define movie schema
 const movieSchema = new mongoose.Schema({
@@ -66,45 +76,28 @@ app.get('/movies/:id', (req, res) => {
 
 //stream movie
 app.get('/movies/stream/:id', (req, res) => {
-    const range = req.headers.range;
-    if (!range) {
-        res.status(400).send("Requires Range Header");
-    }
-    else {
+    
     Movie.findOne({ id: req.params.id })
     .then(movie => {
     if (!movie) {
     res.status(404).json({ message: "Movie not found" });
     }
+    
     else {
-    const videoPath = movie.trailer;
-    const videoSize = fs.statSync(videoPath).size;
-    const CHUNK_SIZE = 500 * 1024; // 500KB
-    const start = Number(range.replace(/\D/g, ""));
-    const end = Math.min(start + CHUNK_SIZE, videoSize - 1);
-    const contentLength = end - start + 1;
-    const headers = {
-    "Content-Range": `bytes ${start}-${end}/${videoSize}`,
-    "Accept-Ranges": "bytes",
-    "Content-Length": contentLength,
-    "Content-Type": "video/mp4"
-    };
-    res.writeHead(206, headers);
-    const videoStream = fs.createReadStream(videoPath, { start, end });
-    videoStream.pipe(res);
+            res.status(200).json(movie.trailer);
+        
     }
     })
     .catch(err => {
     res.status(500).json({ message: "Error streaming movie", error: err });
     });
-    }
+    
     });
     
     //start server
-    const hostname = "netflix_backend.onrender.com";
-   const port = process.env.PORT || 5000;
-
-    app.listen(port, hostname, () => {
+    const hostname = "localhost";
+   
+    app.listen(port =process.env.PORT||5000, hostname, () => {
     console.log(`Server is running on http://${hostname}:${port}`);
     });
     
