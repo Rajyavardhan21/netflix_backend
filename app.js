@@ -102,7 +102,8 @@ app.get('/movies/stream/:id', (req, res) => {
     
     //start server
     const hostname = "netflix_backend.onrender.com";
-    const port = 8008;
+   const port = process.env.PORT || 5000;
+
     app.listen(port, hostname, () => {
     console.log(`Server is running on http://${hostname}:${port}`);
     });
