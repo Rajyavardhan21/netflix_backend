@@ -8,7 +8,7 @@ const cors = require('cors')
 const app = express();
 app.use(bodyParser.json());
 app.use(cors({
-     origin:"http://localhost:3000"}));
+     origin:"https://netflix-52ch.onrender.com"}));
 mongoose.set('strictQuery', false);
 //connect to MongoDB
 
